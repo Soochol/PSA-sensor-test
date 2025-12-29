@@ -1,0 +1,8 @@
+{
+  "cmake.configureOnOpen": false,
+  "cmake.automaticReconfigure": false,
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "extensions.ignoreRecommendations": true,
+  "http.proxySupport": "on",
+  "http.proxyStrictSSL": false
+}

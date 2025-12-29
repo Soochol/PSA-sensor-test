@@ -1,0 +1,109 @@
+/**
+ * @file sensor_types.h
+ * @brief Common sensor type definitions
+ * 
+ * Defines sensor IDs, test status codes, and data structures
+ * for sensor specifications and results.
+ */
+
+#ifndef SENSOR_TYPES_H
+#define SENSOR_TYPES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+#include <stdbool.h>
+#include "stm32h7xx_hal.h"
+
+/*============================================================================*/
+/* Sensor IDs                                                                 */
+/*============================================================================*/
+
+typedef enum {
+    SENSOR_ID_NONE          = 0x00,
+    SENSOR_ID_MLX90640      = 0x01,     /* IR Thermal Camera */
+    SENSOR_ID_VL53L0X       = 0x02,     /* ToF Distance Sensor */
+    /* Future sensors can be added here */
+    /* SENSOR_ID_BME280     = 0x03, */
+    SENSOR_ID_MAX           = 0x03,
+} SensorID_t;
+
+/*============================================================================*/
+/* Test Status Codes                                                          */
+/*============================================================================*/
+
+typedef enum {
+    STATUS_PASS             = 0x00,     /* Test passed */
+    STATUS_FAIL_NO_ACK      = 0x01,     /* No I2C acknowledgement */
+    STATUS_FAIL_TIMEOUT     = 0x02,     /* Operation timeout */
+    STATUS_FAIL_INVALID     = 0x03,     /* Invalid measurement (out of spec) */
+    STATUS_FAIL_INIT        = 0x04,     /* Initialization failed */
+    STATUS_FAIL_NO_SPEC     = 0x05,     /* Specification not set */
+    STATUS_NOT_TESTED       = 0xFF,     /* Not tested (skipped) */
+} TestStatus_t;
+
+/*============================================================================*/
+/* Sensor Specification (Union for different sensor types)                    */
+/*============================================================================*/
+
+/**
+ * @brief Sensor specification union
+ * 
+ * Contains target values and tolerances for each sensor type.
+ * The raw[] array provides byte-level access for serialization.
+ */
+typedef union {
+    /* MLX90640 Specification */
+    struct {
+        int16_t     target_temp;    /* Target temperature ×100 °C (-40.00 ~ 300.00) */
+        uint16_t    tolerance;      /* Tolerance ×100 °C */
+    } mlx90640;
+
+    /* VL53L0X Specification */
+    struct {
+        uint16_t    target_dist;    /* Target distance in mm (30 ~ 2000) */
+        uint16_t    tolerance;      /* Tolerance in mm */
+    } vl53l0x;
+
+    /* Raw bytes for serialization */
+    uint8_t raw[4];
+} SensorSpec_t;
+
+/*============================================================================*/
+/* Sensor Result (Union for different sensor types)                           */
+/*============================================================================*/
+
+/**
+ * @brief Sensor result union
+ * 
+ * Contains measured values and comparison data for each sensor type.
+ * The raw[] array provides byte-level access for serialization.
+ */
+typedef union {
+    /* MLX90640 Result */
+    struct {
+        int16_t     max_temp;       /* Measured max pixel temperature ×100 °C */
+        int16_t     target;         /* Spec target temperature ×100 °C */
+        uint16_t    tolerance;      /* Spec tolerance ×100 °C */
+        uint16_t    diff;           /* |max_temp - target| ×100 °C */
+    } mlx90640;
+
+    /* VL53L0X Result */
+    struct {
+        uint16_t    measured;       /* Measured distance in mm */
+        uint16_t    target;         /* Spec target distance in mm */
+        uint16_t    tolerance;      /* Spec tolerance in mm */
+        uint16_t    diff;           /* |measured - target| in mm */
+    } vl53l0x;
+
+    /* Raw bytes for serialization */
+    uint8_t raw[8];
+} SensorResult_t;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SENSOR_TYPES_H */
