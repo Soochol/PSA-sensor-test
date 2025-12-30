@@ -1,6 +1,9 @@
 {
   "cmake.configureOnOpen": false,
   "cmake.automaticReconfigure": false,
+  "cmake.showNotAllDocumentsSavedQuestion": false,
+  "cmake.enabledOutputParsers": [],
+  "cmake.ignoreCMakeListsMissing": true,
   "C_Cpp.intelliSenseEngine": "disabled",
   "extensions.ignoreRecommendations": true,
   "http.proxySupport": "on",

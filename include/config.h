@@ -84,6 +84,13 @@ typedef enum {
 #define DEBUG_ENABLED               0
 
 /*============================================================================*/
+/* Watchdog Configuration                                                     */
+/*============================================================================*/
+
+#define WATCHDOG_ENABLED            1   /* Enable Independent Watchdog (IWDG) */
+#define WATCHDOG_TIMEOUT_MS         10000 /* Approximate timeout in milliseconds (10 seconds) */
+
+/*============================================================================*/
 /* MLX90640 Configuration                                                     */
 /*============================================================================*/
 
