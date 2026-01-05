@@ -22,7 +22,7 @@
  * @brief Enable/disable MLX90640 debug output
  * Set to 1 to enable debug output via UART, 0 to disable
  */
-#define MLX90640_DEBUG_ENABLE   0
+#define MLX90640_DEBUG_ENABLE   1
 
 /*============================================================================*/
 /* Private Variables                                                          */
@@ -45,11 +45,11 @@ float mlxTemperatures[768];
 
 #if MLX90640_DEBUG_ENABLE
 
-extern UART_HandleTypeDef huart4;
+#include "SEGGER_RTT.h"
 
 static void dbg_print(const char* msg)
 {
-    HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
+    SEGGER_RTT_WriteString(0, msg);
 }
 
 static void dbg_printf(const char* fmt, ...)

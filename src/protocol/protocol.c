@@ -7,6 +7,7 @@
 #include "protocol/frame.h"
 #include "protocol/commands.h"
 #include "hal/uart_handler.h"
+#include "SEGGER_RTT.h"
 #include <string.h>
 
 /*============================================================================*/
@@ -69,25 +70,38 @@ void Protocol_Process(void)
             /* Process command and send response */
             Frame_t response;
             bool send_response = Commands_Process(&request, &response);
-            
+
             if (send_response) {
                 uint8_t tx_buffer[PROTOCOL_MAX_PAYLOAD + 5];
                 uint16_t tx_len = Frame_Build(&response, tx_buffer);
-                
+
                 if (tx_len > 0) {
+                    /* Send via UART */
                     UART_Handler_Send(tx_buffer, tx_len, TIMEOUT_UART_TX_MS);
+                    /* Also send via RTT channel 0 for debugging */
+                    SEGGER_RTT_printf(0, "[RTT-TX] ");
+                    for (uint16_t i = 0; i < tx_len; i++) {
+                        SEGGER_RTT_printf(0, "%02X ", tx_buffer[i]);
+                    }
+                    SEGGER_RTT_printf(0, "\r\n");
                 }
             }
         } else if (result == FRAME_PARSE_CRC_ERROR) {
             /* Send NAK for CRC error */
             Frame_t response;
             Commands_BuildNAK(&response, ERR_CRC_FAIL);
-            
+
             uint8_t tx_buffer[PROTOCOL_MAX_PAYLOAD + 5];
             uint16_t tx_len = Frame_Build(&response, tx_buffer);
-            
+
             if (tx_len > 0) {
                 UART_Handler_Send(tx_buffer, tx_len, TIMEOUT_UART_TX_MS);
+                /* Also send via RTT channel 0 */
+                SEGGER_RTT_printf(0, "[RTT-TX NAK] ");
+                for (uint16_t i = 0; i < tx_len; i++) {
+                    SEGGER_RTT_printf(0, "%02X ", tx_buffer[i]);
+                }
+                SEGGER_RTT_printf(0, "\r\n");
             }
         }
         /* FRAME_PARSE_FORMAT_ERR: silently discard and continue */
@@ -97,6 +111,18 @@ void Protocol_Process(void)
 bool Protocol_IsBusy(void)
 {
     return busy;
+}
+
+void Protocol_FeedData(const uint8_t* data, uint16_t len)
+{
+    /* Same as RxCallback - append data to buffer */
+    uint16_t space = PROTOCOL_RX_BUFFER_SIZE - rx_buffer_len;
+    uint16_t copy_len = (len > space) ? space : len;
+
+    if (copy_len > 0) {
+        memcpy(&rx_buffer[rx_buffer_len], data, copy_len);
+        rx_buffer_len += copy_len;
+    }
 }
 
 /*============================================================================*/

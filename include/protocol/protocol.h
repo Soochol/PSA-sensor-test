@@ -86,6 +86,16 @@ void Protocol_Process(void);
  */
 bool Protocol_IsBusy(void);
 
+/**
+ * @brief Feed data into protocol receive buffer
+ *
+ * Used to inject data from RTT or other sources into the protocol layer.
+ *
+ * @param data Pointer to data bytes
+ * @param len Number of bytes to feed
+ */
+void Protocol_FeedData(const uint8_t* data, uint16_t len);
+
 #ifdef __cplusplus
 }
 #endif
