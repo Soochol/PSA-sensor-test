@@ -258,4 +258,5 @@ steps:
 # Python 의존성
 dependencies:
   python:
+    - station-service-sdk==1.0.4
     - pyserial>=3.5,<4.0
