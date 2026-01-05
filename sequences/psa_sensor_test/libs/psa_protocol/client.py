@@ -300,3 +300,57 @@ class PSAClient:
         spec = VL53L0XSpec(target_dist=target_mm, tolerance=tolerance_mm)
         self.set_spec_vl53l0x(spec)
         return self.test_single(SensorID.VL53L0X)
+
+    def read_sensor_mlx90640(
+        self,
+        timeout: Optional[float] = None
+    ) -> Tuple[int, MLX90640Result]:
+        """
+        Read raw MLX90640 sensor data without spec comparison.
+
+        Args:
+            timeout: Read timeout (None uses default, recommend 10s)
+
+        Returns:
+            Tuple of (status, MLX90640Result)
+        """
+        timeout = timeout or 10.0
+
+        frame = self._send_and_receive(
+            FrameBuilder.build_read_sensor(SensorID.MLX90640),
+            Response.SENSOR_DATA,
+            timeout=timeout
+        )
+
+        status = frame.payload[1]
+        result = MLX90640Result.from_bytes(frame.payload[2:10])
+
+        logger.info(f"Read MLX90640: status={status}, result={result}")
+        return (status, result)
+
+    def read_sensor_vl53l0x(
+        self,
+        timeout: Optional[float] = None
+    ) -> Tuple[int, VL53L0XResult]:
+        """
+        Read raw VL53L0X sensor data without spec comparison.
+
+        Args:
+            timeout: Read timeout (None uses default, recommend 10s)
+
+        Returns:
+            Tuple of (status, VL53L0XResult)
+        """
+        timeout = timeout or 10.0
+
+        frame = self._send_and_receive(
+            FrameBuilder.build_read_sensor(SensorID.VL53L0X),
+            Response.SENSOR_DATA,
+            timeout=timeout
+        )
+
+        status = frame.payload[1]
+        result = VL53L0XResult.from_bytes(frame.payload[2:10])
+
+        logger.info(f"Read VL53L0X: status={status}, result={result}")
+        return (status, result)

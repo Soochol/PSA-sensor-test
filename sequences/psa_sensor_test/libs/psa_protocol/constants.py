@@ -20,6 +20,7 @@ class Command(IntEnum):
     TEST_ALL = 0x10
     TEST_SINGLE = 0x11
     GET_SENSOR_LIST = 0x12
+    READ_SENSOR = 0x13
     SET_SPEC = 0x20
     GET_SPEC = 0x21
 
@@ -31,6 +32,7 @@ class Response(IntEnum):
     SENSOR_LIST = 0x81
     SPEC_ACK = 0x82
     SPEC_DATA = 0x83
+    SENSOR_DATA = 0x84
     NAK = 0xFE
 
 

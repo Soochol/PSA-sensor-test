@@ -99,6 +99,11 @@ class FrameBuilder:
         """Build GET_SPEC command frame."""
         return FrameBuilder.build(Frame(Command.GET_SPEC, bytes([sensor_id])))
 
+    @staticmethod
+    def build_read_sensor(sensor_id: int) -> bytes:
+        """Build READ_SENSOR command frame."""
+        return FrameBuilder.build(Frame(Command.READ_SENSOR, bytes([sensor_id])))
+
 
 class FrameParser:
     """Parses frames from byte stream."""
