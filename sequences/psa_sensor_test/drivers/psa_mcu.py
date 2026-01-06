@@ -324,10 +324,14 @@ class PSAMCUDriver(BaseDriver):
                     result["tolerance_mm"] = r.result.tolerance
                     result["diff_mm"] = r.result.diff
                 elif sensor_name == "MLX90640":
-                    result["measured_celsius"] = r.result.max_temp / CELSIUS_MULTIPLIER
-                    result["target_celsius"] = r.result.target / CELSIUS_MULTIPLIER
-                    result["tolerance_celsius"] = r.result.tolerance / CELSIUS_MULTIPLIER
-                    result["diff_celsius"] = r.result.diff / CELSIUS_MULTIPLIER
+                    # Use property methods for automatic x10 conversion
+                    result["measured_celsius"] = r.result.measured_celsius
+                    result["target_celsius"] = r.result.target_celsius
+                    result["tolerance_celsius"] = r.result.tolerance_celsius
+                    result["diff_celsius"] = r.result.diff_celsius
+                    result["ambient_celsius"] = r.result.ambient_celsius
+                    result["min_temp_celsius"] = r.result.min_temp_celsius
+                    result["max_temp_celsius"] = r.result.max_temp_celsius
 
         return result
 

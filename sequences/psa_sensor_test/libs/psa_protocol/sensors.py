@@ -14,78 +14,108 @@ from .constants import SensorID, TestStatus
 
 @dataclass
 class MLX90640Spec:
-    """MLX90640 test specification."""
-    target_temp: int   # Target temperature x100 (degrees C), int16
-    tolerance: int     # Tolerance x100 (degrees C), uint16
+    """
+    MLX90640 test specification.
+
+    Temperature values are in 0.1°C units (x10).
+    """
+    target_temp: int   # Target temperature x10 (0.1°C units), int16
+    tolerance: int     # Tolerance x10 (0.1°C units), int16
 
     def to_bytes(self) -> bytes:
         """Serialize to big-endian bytes."""
-        return struct.pack('>hH', self.target_temp, self.tolerance)
+        return struct.pack('>hh', self.target_temp, self.tolerance)
 
     @classmethod
     def from_bytes(cls, data: bytes) -> 'MLX90640Spec':
         """Deserialize from big-endian bytes."""
-        target, tolerance = struct.unpack('>hH', data[:4])
+        target, tolerance = struct.unpack('>hh', data[:4])
         return cls(target, tolerance)
 
     @property
     def target_celsius(self) -> float:
         """Target temperature in Celsius."""
-        return self.target_temp / 100.0
+        return self.target_temp / 10.0
 
     @property
     def tolerance_celsius(self) -> float:
         """Tolerance in Celsius."""
-        return self.tolerance / 100.0
+        return self.tolerance / 10.0
 
     def __repr__(self) -> str:
-        return f"MLX90640Spec(target={self.target_celsius:.2f}C, tolerance=+/-{self.tolerance_celsius:.2f}C)"
+        return f"MLX90640Spec(target={self.target_celsius:.1f}C, tolerance=+/-{self.tolerance_celsius:.1f}C)"
 
 
 @dataclass
 class MLX90640Result:
-    """MLX90640 test result."""
-    max_temp: int      # Measured max temperature x100, int16
-    target: int        # Target temperature x100, int16
-    tolerance: int     # Tolerance x100, uint16
-    diff: int          # Absolute difference x100, uint16
+    """
+    MLX90640 test result.
+
+    All temperature values are in 0.1°C units (x10).
+    Total size: 14 bytes (7 x int16).
+    """
+    measured: int      # Measured temperature x10, int16
+    target: int        # Target temperature x10, int16
+    tolerance: int     # Tolerance x10, int16
+    diff: int          # Absolute difference x10, int16
+    ambient: int       # Ambient temperature x10, int16
+    min_temp: int      # Min pixel temperature x10, int16
+    max_temp: int      # Max pixel temperature x10, int16
 
     @classmethod
     def from_bytes(cls, data: bytes) -> 'MLX90640Result':
-        """Deserialize from big-endian bytes."""
-        max_temp, target, tolerance, diff = struct.unpack('>hhHH', data[:8])
-        return cls(max_temp, target, tolerance, diff)
+        """Deserialize from big-endian bytes (14 bytes)."""
+        measured, target, tolerance, diff, ambient, min_temp, max_temp = struct.unpack('>hhhhhhh', data[:14])
+        return cls(measured, target, tolerance, diff, ambient, min_temp, max_temp)
 
     @property
-    def max_temp_celsius(self) -> float:
-        """Measured max temperature in Celsius."""
-        return self.max_temp / 100.0
+    def measured_celsius(self) -> float:
+        """Measured temperature in Celsius."""
+        return self.measured / 10.0
 
     @property
     def target_celsius(self) -> float:
         """Target temperature in Celsius."""
-        return self.target / 100.0
+        return self.target / 10.0
 
     @property
     def tolerance_celsius(self) -> float:
         """Tolerance in Celsius."""
-        return self.tolerance / 100.0
+        return self.tolerance / 10.0
 
     @property
     def diff_celsius(self) -> float:
         """Difference in Celsius."""
-        return self.diff / 100.0
+        return self.diff / 10.0
+
+    @property
+    def ambient_celsius(self) -> float:
+        """Ambient temperature in Celsius."""
+        return self.ambient / 10.0
+
+    @property
+    def min_temp_celsius(self) -> float:
+        """Min pixel temperature in Celsius."""
+        return self.min_temp / 10.0
+
+    @property
+    def max_temp_celsius(self) -> float:
+        """Max pixel temperature in Celsius."""
+        return self.max_temp / 10.0
 
     @property
     def passed(self) -> bool:
         """Check if measurement is within tolerance."""
-        return self.diff <= self.tolerance
+        return abs(self.diff) <= abs(self.tolerance)
 
     def __repr__(self) -> str:
         status = "PASS" if self.passed else "FAIL"
-        return (f"MLX90640Result(max={self.max_temp_celsius:.2f}C, "
-                f"target={self.target_celsius:.2f}C, "
-                f"diff={self.diff_celsius:.2f}C, {status})")
+        return (f"MLX90640Result(measured={self.measured_celsius:.1f}C, "
+                f"target={self.target_celsius:.1f}C, "
+                f"diff={self.diff_celsius:.1f}C, "
+                f"ambient={self.ambient_celsius:.1f}C, "
+                f"min={self.min_temp_celsius:.1f}C, "
+                f"max={self.max_temp_celsius:.1f}C, {status})")
 
 
 @dataclass
@@ -205,15 +235,19 @@ class TestReport:
             sensor_id = data[idx]; idx += 1
             status = data[idx]; idx += 1
 
-            # Parse sensor-specific result (8 bytes)
-            result_data = data[idx:idx+8]; idx += 8
-
+            # Parse sensor-specific result (size depends on sensor type)
             result: Optional[Union[MLX90640Result, VL53L0XResult]] = None
-            if status in (TestStatus.PASS, TestStatus.FAIL_INVALID):
-                if sensor_id == SensorID.MLX90640:
+            if sensor_id == SensorID.MLX90640:
+                result_data = data[idx:idx+14]; idx += 14  # MLX90640: 14 bytes
+                if status in (TestStatus.PASS, TestStatus.FAIL_INVALID):
                     result = MLX90640Result.from_bytes(result_data)
-                elif sensor_id == SensorID.VL53L0X:
+            elif sensor_id == SensorID.VL53L0X:
+                result_data = data[idx:idx+8]; idx += 8    # VL53L0X: 8 bytes
+                if status in (TestStatus.PASS, TestStatus.FAIL_INVALID):
                     result = VL53L0XResult.from_bytes(result_data)
+            else:
+                # Unknown sensor, skip 8 bytes as default
+                idx += 8
 
             results.append(SensorTestResult(sensor_id, status, result))
 

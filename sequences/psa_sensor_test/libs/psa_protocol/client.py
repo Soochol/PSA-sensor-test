@@ -276,8 +276,8 @@ class PSAClient:
             TestReport with MLX90640 result
         """
         spec = MLX90640Spec(
-            target_temp=int(target_celsius * 100),
-            tolerance=int(tolerance_celsius * 100)
+            target_temp=int(target_celsius * 10),  # x10 (0.1°C units)
+            tolerance=int(tolerance_celsius * 10)   # x10 (0.1°C units)
         )
         self.set_spec_mlx90640(spec)
         return self.test_single(SensorID.MLX90640)
@@ -323,7 +323,7 @@ class PSAClient:
         )
 
         status = frame.payload[1]
-        result = MLX90640Result.from_bytes(frame.payload[2:10])
+        result = MLX90640Result.from_bytes(frame.payload[2:16])  # 14 bytes
 
         logger.info(f"Read MLX90640: status={status}, result={result}")
         return (status, result)
