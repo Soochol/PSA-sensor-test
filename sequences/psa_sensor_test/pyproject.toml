@@ -5,4 +5,5 @@ description = "PSA sensor test sequence for VL53L0X and MLX90640 sensors"
 requires-python = ">=3.10"
 dependencies = [
     "pyserial>=3.5,<4.0",
+    "loguru>=0.7.0",
 ]

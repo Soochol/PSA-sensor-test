@@ -10,9 +10,10 @@ This module uses the SDK 2.0 SequenceBase pattern with:
 - teardown(): Resource cleanup
 """
 
-import logging
 import time
 from typing import Any, Dict, Optional
+
+from loguru import logger
 
 from station_service_sdk import (
     SequenceBase,
@@ -21,8 +22,6 @@ from station_service_sdk import (
     SetupError,
     HardwareError,
 )
-
-logger = logging.getLogger(__name__)
 
 # Lazy import for driver - allows metadata extraction without dependencies
 PSAMCUDriver = None
